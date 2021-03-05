@@ -14,6 +14,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,16 +41,22 @@ public class FileUploadController {
 //
 //        return new Response(fileName.getId(), fileDownloadUri,
 //                file.getContentType(), file.getSize());
-        File files = new File(bucketPath+"\\image.png");
-
+        String fileName = file.getOriginalFilename();
+        String extension = fileName.substring(fileName.lastIndexOf('.')); // get file extension [.png or .jpg...]
+        String newFileName = new Date().getTime()+extension; // generate new filename by using millisecond of datetime value concat with file extension to prevent the duplicate filePath. Ex: 12345676543.png
+        File files = new File(bucketPath+"\\"+newFileName);
+        ImageFile imageFile = new ImageFile();
         try (OutputStream os = new FileOutputStream(files)) {
+            //write file to local disk
             os.write(file.getBytes());
+            // save filePath name to database
+            imageFile = fileStorageService.storeFile(new ImageFile(newFileName,extension));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new Response("sad","dasd","dsadass",1234);
+        return new Response(imageFile.getFileName(), null,extension,file.getSize());
     }
 
     @PostMapping("/uploadMultipleFiles")
